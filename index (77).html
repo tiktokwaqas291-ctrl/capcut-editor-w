@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CapCut Editor</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lobster&family=Oswald:wght@600&family=Pacifico&family=Permanent+Marker&family=Noto+Nastaliq+Urdu:wght@700&display=swap" rel="stylesheet">
+<style>
+body{background:#0b0f19;color:#fff;font-family:system-ui,-apple-system,sans-serif;user-select:none}
+.no-scrollbar::-webkit-scrollbar{display:none}
+.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
+.tool{flex:0 0 19%;min-width:66px;display:flex;flex-direction:column;align-items:center;padding:10px 0 8px;color:#e5e7eb;cursor:pointer}
+.tool i{font-size:20px}.tool span{font-size:11px;margin-top:5px}
+.chip{border:1px solid #334155;background:#0f172a;border-radius:10px;padding:8px 4px;font-size:11px;text-align:center;cursor:pointer}
+.chip.active{border-color:#22d3ee;background:#083344;color:#22d3ee;font-weight:700}
+.ratio-chip{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;flex:0 0 auto;min-width:64px;padding:10px 8px}
+.ratio-chip i{font-size:22px}
+</style>
+</head>
+<body class="h-screen flex flex-col justify-between overflow-hidden">
+
+<!-- 1. HOME -->
+<div id="home-screen" class="block h-full overflow-y-auto pb-20" style="background:linear-gradient(to bottom,#1e3a8a,#0f172a,#020617)">
+  <div class="flex justify-between items-center px-4 py-3">
+    <div class="bg-slate-800/80 border border-slate-700 rounded-full px-3 py-1 flex items-center space-x-2 text-xs">
+      <span class="text-cyan-400">💎</span><span class="text-slate-200">Try Standard 7 days for -</span>
+    </div>
+    <div class="w-9 h-9 rounded-full bg-slate-800/80 flex items-center justify-center border border-slate-700"><i class="fa-solid fa-magnifying-glass text-sm"></i></div>
+  </div>
+  <div class="px-4 mt-2">
+    <h2 class="text-xs uppercase tracking-wider text-slate-400 font-medium">Video create</h2>
+    <div class="flex items-center space-x-1 text-xl font-bold mt-0.5"><span>Get started</span><i class="fa-solid fa-chevron-right text-xs text-slate-400"></i></div>
+    <div class="grid grid-cols-2 gap-3 mt-3">
+      <div onclick="openPhoneGallery('video')" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between h-32 shadow-lg active:scale-95 transition-transform cursor-pointer">
+        <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center"><i class="fa-solid fa-plus text-lg"></i></div>
+        <span class="font-semibold text-base">New video</span>
+      </div>
+      <input type="file" id="gallery-video" class="hidden" accept="video/*" multiple onchange="handleFilesSelected(event)">
+      <input type="file" id="gallery-image" class="hidden" accept="image/*" multiple onchange="handleFilesSelected(event)">
+      <div onclick="openPhoneGallery('image')" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between h-32 shadow-lg active:scale-95 transition-transform cursor-pointer">
+        <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center"><i class="fa-regular fa-image text-lg"></i></div>
+        <span class="font-semibold text-base">Edit photo</span>
+      </div>
+    </div>
+  </div>
+  <div class="fixed bottom-0 left-0 right-0 bg-[#0b132b]/95 border-t border-slate-800 py-2 px-6 flex justify-between items-center z-50">
+    <div class="flex flex-col items-center text-cyan-400"><i class="fa-solid fa-scissors text-lg"></i><span class="text-[10px] mt-1">Edit</span></div>
+    <div class="flex flex-col items-center text-slate-400"><i class="fa-regular fa-clone text-lg"></i><span class="text-[10px] mt-1">Templates</span></div>
+    <div class="flex flex-col items-center text-slate-400"><i class="fa-solid fa-cube text-lg"></i><span class="text-[10px] mt-1">AI Lab</span></div>
+    <div class="flex flex-col items-center text-slate-400"><i class="fa-regular fa-folder text-lg"></i><span class="text-[10px] mt-1">Projects</span></div>
+    <div class="flex flex-col items-center text-slate-400"><i class="fa-regular fa-user text-lg"></i><span class="text-[10px] mt-1">Me</span></div>
+  </div>
+</div>
+
+<!-- 2. GALLERY -->
+<div id="gallery-screen" class="hidden h-full flex flex-col justify-between bg-[#0b0f19]">
+  <div class="flex items-center px-4 py-3 border-b border-slate-800 space-x-3">
+    <i onclick="backToHome()" class="fa-solid fa-xmark text-slate-400 text-lg cursor-pointer"></i>
+    <span class="text-sm font-medium text-slate-200">Selected from Gallery</span>
+  </div>
+  <div class="flex-1 overflow-y-auto px-2 py-3"><div id="selected-media-grid" class="grid grid-cols-3 gap-2"></div></div>
+  <div class="border-t border-slate-800 px-4 py-3 flex justify-end">
+    <button onclick="goToEditor()" class="bg-cyan-500 text-slate-950 px-6 py-2 rounded-full text-xs font-bold">Next</button>
+  </div>
+</div>
+
+<!-- 3. EDITOR -->
+<div id="editor-screen" class="hidden h-full flex flex-col bg-black">
+  <div class="flex justify-between items-center px-4 pt-3 pb-2">
+    <i onclick="backToHome()" class="fa-solid fa-xmark text-white text-2xl cursor-pointer w-10"></i>
+    <div class="flex items-center space-x-3">
+      <button onclick="openExport()" class="flex items-center space-x-2 bg-[#26262a] rounded-xl px-3 py-2 text-sm font-semibold"><span id="res-badge">1080p</span><i class="fa-solid fa-caret-down text-xs"></i></button>
+      <button onclick="openExport()" class="flex items-center space-x-2 rounded-xl px-4 py-2 text-sm font-bold text-black" style="background:#19c8e8"><i class="fa-solid fa-file-export"></i><span>Export</span></button>
+    </div>
+  </div>
+
+  <div id="stage" class="flex-1 min-h-0 flex items-center justify-center">
+    <div id="frame" class="relative bg-black overflow-hidden" style="width:200px;height:355px">
+      <video id="preview-video" class="absolute inset-0 w-full h-full object-contain" playsinline></video>
+      <img id="preview-image" class="hidden absolute inset-0 w-full h-full object-contain">
+      <canvas id="trans-canvas" class="absolute inset-0 w-full h-full pointer-events-none" style="display:none"></canvas>
+      <canvas id="overlay-canvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-3 items-center px-4 py-2">
+    <button onclick="goFullscreen()" class="text-left text-xl w-10"><i class="fa-solid fa-expand"></i></button>
+    <button onclick="togglePlayPause()" class="text-2xl justify-self-center w-12"><i id="play-pause-icon" class="fa-solid fa-play"></i></button>
+    <div class="flex space-x-6 text-xl justify-self-end">
+      <button id="undo-btn" onclick="undo()"><i class="fa-solid fa-rotate-left"></i></button>
+      <button id="redo-btn" onclick="redo()"><i class="fa-solid fa-rotate-right"></i></button>
+    </div>
+  </div>
+
+  <div id="edit-panel" class="hidden bg-[#161618] border-t border-[#2a2a2e] px-3 pt-2 pb-3">
+    <div class="flex items-center justify-between mb-2">
+      <span id="panel-title" class="text-sm font-bold text-cyan-400">Text</span>
+      <div class="flex items-center space-x-4">
+        <button onclick="panelDelete()" title="Clear" class="text-red-400 text-sm"><i class="fa-regular fa-trash-can"></i></button>
+        <button onclick="closePanel()" class="bg-cyan-500 text-slate-950 w-8 h-8 rounded-full"><i class="fa-solid fa-check text-sm"></i></button>
+      </div>
+    </div>
+    <div id="panel-text-row" class="flex items-stretch space-x-2">
+      <textarea id="panel-text" rows="2" placeholder="Type your text here..." oninput="onTextInput()" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400 resize-none"></textarea>
+      <div class="flex flex-col space-y-1">
+        <button onclick="bumpSize(1)" class="flex-1 w-12 rounded-lg bg-slate-800 border border-slate-700 font-bold text-base active:scale-95">A+</button>
+        <button onclick="bumpSize(-1)" class="flex-1 w-12 rounded-lg bg-slate-800 border border-slate-700 font-bold text-xs active:scale-95">A−</button>
+      </div>
+    </div>
+    <div id="panel-tabs" class="flex space-x-2 mt-2 overflow-x-auto no-scrollbar"></div>
+    <div id="panel-body" class="mt-2 max-h-[24vh] overflow-y-auto no-scrollbar"></div>
+  </div>
+
+  <div id="tl-section" class="relative bg-[#161618] flex-none" style="height:196px">
+    <div class="absolute left-0 top-0 z-20 bg-[#161618] pl-3 pr-3 h-6 text-xs flex items-center whitespace-nowrap"><span id="t-cur">00:00</span><span class="text-slate-500 ml-1">/ <span id="t-tot">00:00</span></span></div>
+    <div id="tl-scroll" class="overflow-x-auto overflow-y-auto no-scrollbar h-full"><div id="tl-inner"></div></div>
+    <div class="absolute top-0 bottom-0 z-10 pointer-events-none bg-white" style="left:50%;width:2px;margin-left:-1px"></div>
+    <button onclick="openAddMenu()" title="Add clip" class="absolute z-20 w-11 h-11 rounded-lg bg-white text-black flex items-center justify-center active:scale-95" style="right:12px;top:36px;box-shadow:0 2px 8px rgba(0,0,0,.5)"><i class="fa-solid fa-plus text-lg"></i></button>
+  </div>
+
+  <div id="tools-bar" class="flex-none bg-[#161618] border-t border-[#2a2a2e] flex overflow-x-auto no-scrollbar pb-1">
+    <div class="tool" onclick="openTool('Edit')"><i class="fa-solid fa-scissors"></i><span>Edit</span></div>
+    <div class="tool" onclick="openTool('Ratio')"><i class="fa-solid fa-crop-simple"></i><span>Ratio</span></div>
+    <div class="tool" onclick="openTool('Audio')"><i class="fa-solid fa-music"></i><span>Audio</span></div>
+    <div class="tool" onclick="openTool('Text')"><i class="fa-solid fa-font"></i><span>Text</span></div>
+    <div class="tool" onclick="openTool('Effects')"><i class="fa-solid fa-wand-magic-sparkles"></i><span>Effects</span></div>
+    <div class="tool" onclick="openTool('Overlay')"><i class="fa-regular fa-image"></i><span>Overlay</span></div>
+    <div class="tool" onclick="openTool('Captions')"><i class="fa-regular fa-closed-captioning"></i><span>Captions</span></div>
+  </div>
+  <div id="edit-bar" class="hidden flex-none bg-[#161618] border-t border-[#2a2a2e] flex overflow-x-auto no-scrollbar pb-1">
+    <div class="tool" onclick="closeEditBar()"><i class="fa-solid fa-chevron-left"></i><span>Back</span></div>
+    <div class="tool" onclick="toggleMulti()"><i id="multi-icon" class="fa-regular fa-square-check"></i><span id="multi-label">Select</span></div>
+    <div class="tool" onclick="selectAll()"><i class="fa-solid fa-check-double"></i><span>Select all</span></div>
+    <div class="tool" onclick="splitClip()"><i class="fa-solid fa-scissors"></i><span>Split</span></div>
+    <div class="tool" onclick="moveClip(-1)"><i class="fa-solid fa-arrow-left"></i><span>Move left</span></div>
+    <div class="tool" onclick="moveClip(1)"><i class="fa-solid fa-arrow-right"></i><span>Move right</span></div>
+    <div class="tool" onclick="duplicateClip()"><i class="fa-regular fa-clone"></i><span>Duplicate</span></div>
+    <div class="tool" onclick="deleteClip()"><i class="fa-regular fa-trash-can text-red-400"></i><span>Delete</span></div>
+  </div>
+  <input type="file" id="add-more-video" class="hidden" accept="video/*" multiple onchange="addMoreFiles(event)">
+  <input type="file" id="add-more-image" class="hidden" accept="image/*" multiple onchange="addMoreFiles(event)">
+  <input type="file" id="audio-input" class="hidden" accept="audio/*" onchange="addAudio(event)">
+  <input type="file" id="ovl-input" class="hidden" accept="image/*" onchange="addOverlay(event)">
+</div>
+
+<div id="toast" class="hidden fixed left-1/2 -translate-x-1/2 bottom-24 z-[140] bg-black/85 border border-slate-600 text-sm px-4 py-2 rounded-full"></div>
+
+<!-- SAVE OVERLAY (for apps that cannot download files) -->
+<div id="save-overlay" class="hidden fixed inset-0 z-[130] bg-black/95 flex flex-col items-center justify-center p-4">
+  <div class="text-sm text-center mb-3 text-slate-200">Press and hold the <span id="save-kind">image</span>, then choose Save / Download.</div>
+  <div id="save-media" class="flex items-center justify-center" style="max-height:68vh;max-width:100%"></div>
+  <button onclick="closeSaveOverlay()" class="mt-4 bg-cyan-500 text-slate-950 px-8 py-2 rounded-full text-sm font-bold">Close</button>
+</div>
+
+<!-- COVER MODAL -->
+<div id="cover-modal" class="hidden fixed inset-0 z-[100] bg-black/80 flex items-end sm:items-center justify-center">
+  <div class="bg-[#121826] border border-slate-700 rounded-t-2xl sm:rounded-2xl w-full max-w-md p-4 max-h-[94vh] overflow-y-auto">
+    <div class="flex justify-between items-center mb-3">
+      <span class="font-bold text-base">Thumbnail</span>
+      <i onclick="closeCover()" class="fa-solid fa-xmark text-slate-400 text-lg cursor-pointer"></i>
+    </div>
+    <div class="bg-black rounded-lg flex justify-center p-1"><canvas id="cover-canvas" class="rounded" style="max-height:42vh;max-width:100%"></canvas></div>
+    <div id="cover-slider-wrap" class="mt-3">
+      <div class="text-xs text-slate-400 mb-1">Pick a frame <span id="cover-time" class="text-cyan-400"></span></div>
+      <input id="cover-range" type="range" min="0" max="1" step="0.05" value="0" class="w-full accent-cyan-500" oninput="seekCover(this.value)">
+    </div>
+    <button onclick="document.getElementById('cover-upload').click()" class="w-full mt-3 bg-slate-800 border border-slate-700 rounded-lg py-2 text-xs font-bold"><i class="fa-regular fa-image mr-1"></i> Upload own image</button>
+    <input type="file" id="cover-upload" class="hidden" accept="image/*" onchange="uploadCover(event)">
+    <label class="flex items-center space-x-2 text-xs mt-3"><input type="checkbox" id="cover-text" class="accent-cyan-500" checked onchange="drawCoverPreview()"><span>Show text on thumbnail</span></label>
+    <label class="flex items-center space-x-2 text-xs mt-2"><input type="checkbox" id="cover-first" class="accent-cyan-500"><span>Show cover as first frame of video (1 sec)</span></label>
+    <div id="cover-info" class="text-[11px] text-slate-400 mt-2"></div>
+    <button onclick="saveCover()" class="w-full mt-3 bg-cyan-500 text-slate-950 py-2.5 rounded-full text-sm font-bold"><i class="fa-solid fa-check mr-1"></i> Save cover</button>
+    <div class="grid grid-cols-2 gap-2 mt-2">
+      <button onclick="downloadCover()" class="bg-slate-800 border border-slate-700 rounded-full py-2 text-xs font-bold">Download JPG</button>
+      <button id="cover-reset" onclick="resetCover()" class="bg-slate-800 border border-slate-700 rounded-full py-2 text-xs font-bold text-red-300">Remove cover</button>
+    </div>
+    <video id="cover-video" class="hidden" muted playsinline preload="auto"></video>
+  </div>
+</div>
+
+<!-- ADD CLIP MENU -->
+<div id="add-menu" class="hidden fixed inset-0 z-[90] bg-black/60 flex items-end justify-center" onclick="this.classList.add('hidden')">
+  <div class="bg-[#121826] border border-slate-700 rounded-t-2xl w-full max-w-md p-4 grid grid-cols-2 gap-3" onclick="event.stopPropagation()">
+    <button onclick="document.getElementById('add-menu').classList.add('hidden');document.getElementById('add-more-video').click()" class="bg-slate-900 border border-slate-700 rounded-xl py-5 flex flex-col items-center space-y-2 active:scale-95">
+      <i class="fa-solid fa-video text-xl text-cyan-400"></i><span class="text-sm font-semibold">Video</span>
+    </button>
+    <button onclick="document.getElementById('add-menu').classList.add('hidden');document.getElementById('add-more-image').click()" class="bg-slate-900 border border-slate-700 rounded-xl py-5 flex flex-col items-center space-y-2 active:scale-95">
+      <i class="fa-regular fa-image text-xl text-cyan-400"></i><span class="text-sm font-semibold">Photo</span>
+    </button>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div id="export-modal" class="hidden fixed inset-0 z-[100] bg-black/70 flex items-end sm:items-center justify-center">
+  <div class="bg-[#121826] border border-slate-700 rounded-t-2xl sm:rounded-2xl w-full max-w-md p-4 max-h-[92vh] overflow-y-auto">
+    <div class="flex justify-between items-center mb-3">
+      <span class="font-bold text-base">Export settings</span>
+      <i onclick="closeExport()" class="fa-solid fa-xmark text-slate-400 text-lg cursor-pointer"></i>
+    </div>
+
+    <div class="text-xs text-slate-400 mb-1">Resolution</div>
+    <div id="res-grid" class="grid grid-cols-3 gap-2"></div>
+    <div class="flex items-center space-x-2 mt-2">
+      <input id="custom-h" type="number" min="64" max="8640" placeholder="Custom height (e.g. 900)" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs outline-none focus:border-cyan-400">
+      <button onclick="applyCustomRes()" class="bg-slate-700 px-3 py-2 rounded-lg text-xs font-bold">Set</button>
+    </div>
+
+    <div class="text-xs text-slate-400 mt-4 mb-1">Aspect ratio</div>
+    <div id="ratio-grid" class="grid grid-cols-4 gap-2"></div>
+
+    <div class="text-xs text-slate-400 mt-4 mb-1">Frame rate</div>
+    <div id="fps-grid" class="grid grid-cols-5 gap-2"></div>
+
+    <div class="text-xs text-slate-400 mt-4 mb-1">Quality</div>
+    <div id="q-grid" class="grid grid-cols-3 gap-2"></div>
+
+    <div id="export-summary" class="mt-4 text-xs text-slate-300 bg-slate-900 rounded-lg p-3"></div>
+    <div id="export-warning" class="hidden mt-2 text-[11px] text-amber-400"></div>
+
+    <div id="progress-wrap" class="hidden mt-3">
+      <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div id="progress-bar" class="h-full bg-cyan-400" style="width:0%"></div></div>
+      <div id="progress-text" class="text-[11px] text-slate-400 mt-1">Rendering...</div>
+    </div>
+
+    <button id="export-btn" onclick="startExport()" class="w-full mt-4 bg-cyan-500 text-slate-950 py-2.5 rounded-full text-sm font-bold">Export</button>
+    <button id="download-link" onclick="saveExport()" class="hidden block text-center w-full mt-2 bg-emerald-500 text-slate-950 py-2.5 rounded-full text-sm font-bold">Save video</button>
+  </div>
+</div>
+
+<script>
+// Shows any JavaScript error on screen so it can be screenshotted (phones have no console)
+(function(){
+  const log = [];
+  function show(msg){
+    log.push(String(msg).slice(0, 220)); if (log.length > 3) log.shift();
+    let b = document.getElementById('err-banner');
+    if (!b) {
+      b = document.createElement('div'); b.id = 'err-banner';
+      b.style.cssText = 'position:fixed;left:8px;right:8px;top:8px;z-index:99999;background:#7f1d1d;color:#fff;font:12px/1.4 monospace;padding:8px 10px;border-radius:8px;white-space:pre-wrap';
+      b.onclick = () => { b.remove(); log.length = 0; };
+      document.body.appendChild(b);
+    }
+    b.textContent = 'ERROR (tap to hide)\n' + log.join('\n');
+  }
+  window.addEventListener('error', e => show((e.message || 'error') + (e.lineno ? ' [line ' + e.lineno + ']' : '')));
+  window.addEventListener('unhandledrejection', e => show('Promise: ' + ((e.reason && e.reason.message) || e.reason)));
+})();
+let clips = [];           // {url, type}
+let currentFilter = 'none';
+let exportT0 = 0;
+let cancelExport = false;
+
+// ---------- Export options ----------
+const RESOLUTIONS = [
+  {label:'144p',h:144},{label:'240p',h:240},{label:'360p',h:360},
+  {label:'480p',h:480},{label:'540p',h:540},{label:'720p HD',h:720},
+  {label:'1080p FHD',h:1080},{label:'1440p 2K',h:1440},{label:'2160p 4K',h:2160},
+  {label:'4320p 8K',h:4320}
+];
+const RATIOS = [
+  {label:'Original',w:0,h:0},
+  {label:'9:16',w:9,h:16},{label:'16:9',w:16,h:9},{label:'1:1',w:1,h:1},
+  {label:'4:5',w:4,h:5},{label:'3:4',w:3,h:4},{label:'4:3',w:4,h:3},
+  {label:'2:3',w:2,h:3},{label:'3:2',w:3,h:2},{label:'21:9',w:21,h:9},
+  {label:'2.35:1',w:47,h:20},{label:'1.85:1',w:37,h:20}
+];
+const RATIO_ICONS = {
+  'Original':'fa-solid fa-expand','9:16':'fa-brands fa-tiktok','16:9':'fa-brands fa-youtube',
+  '1:1':'fa-brands fa-instagram','4:5':'fa-brands fa-instagram','3:4':'fa-solid fa-mobile-screen',
+  '4:3':'fa-brands fa-youtube','2:3':'fa-brands fa-pinterest','3:2':'fa-solid fa-camera',
+  '21:9':'fa-solid fa-film','2.35:1':'fa-solid fa-clapperboard','1.85:1':'fa-solid fa-video'
+};
+function ratioChip(i, js){
+  const r = RATIOS[i], on = opt.ratio === i;
+  return `<div class="chip ratio-chip ${on?'active':''}" onclick="${js}"><i class="${RATIO_ICONS[r.label] || 'fa-solid fa-crop-simple'}"></i><span>${r.label}</span></div>`;
+}
+const FPS = [24,25,30,50,60];
+function ratioDims(i){
+  const r = RATIOS[i];
+  if (r.w) return r;
+  const c = (typeof clips !== 'undefined') && clips[0];
+  return (c && c.vw && c.vh) ? { w: c.vw, h: c.vh } : { w: 9, h: 16 };
+}
+function setOpt(k, v){ opt[k] = v; renderOptions(); renderPanel(); }
+const QUALITY = [{label:'Low',bpp:0.04},{label:'Medium',bpp:0.08},{label:'High',bpp:0.15}];
+
+let opt = { h:1080, ratio:1, fps:30, q:1 };
+
+function renderOptions(){
+  document.getElementById('res-grid').innerHTML = RESOLUTIONS.map(r =>
+    `<div class="chip ${opt.h===r.h?'active':''}" onclick="opt.h=${r.h};renderOptions()">${r.label}</div>`).join('');
+  document.getElementById('ratio-grid').innerHTML = RATIOS.map((r,i) =>
+    ratioChip(i, `opt.ratio=${i};renderOptions()`)).join('');
+  document.getElementById('fps-grid').innerHTML = FPS.map(f =>
+    `<div class="chip ${opt.fps===f?'active':''}" onclick="opt.fps=${f};renderOptions()">${f} fps</div>`).join('');
+  document.getElementById('q-grid').innerHTML = QUALITY.map((q,i) =>
+    `<div class="chip ${opt.q===i?'active':''}" onclick="opt.q=${i};renderOptions()">${q.label}</div>`).join('');
+
+  const {W,H} = outputSize();
+  const mbps = (bitrate()/1e6).toFixed(1);
+  document.getElementById('export-summary').innerHTML =
+    `Output: <b>${W} × ${H}</b> &nbsp;|&nbsp; ${opt.fps} fps &nbsp;|&nbsp; ~${mbps} Mbps &nbsp;|&nbsp; WebM`;
+  document.getElementById('res-badge').innerText = opt.h + 'p';
+  fitFrame();
+
+  const warn = document.getElementById('export-warning');
+  if (opt.h >= 2160) {
+    warn.classList.remove('hidden');
+    warn.innerText = 'Note: 4K/8K needs a powerful device. Browser may fail or crash on phones. Try 1080p if export fails.';
+  } else warn.classList.add('hidden');
+}
+
+function even(n){ return Math.max(2, Math.round(n/2)*2); }
+
+// opt.h = shorter side (e.g. 1080p => 1080 on short edge), like CapCut
+function outputSize(){
+  const r = ratioDims(opt.ratio);
+  let W, H;
+  if (r.w >= r.h) { H = opt.h; W = H * r.w / r.h; }   // landscape or square
+  else            { W = opt.h; H = W * r.h / r.w; }   // portrait
+  return { W: even(W), H: even(H) };
+}
+function bitrate(){
+  const {W,H} = outputSize();
+  return Math.round(W * H * opt.fps * QUALITY[opt.q].bpp);
+}
+function applyCustomRes(){
+  const v = parseInt(document.getElementById('custom-h').value);
+  if (!v || v < 64 || v > 8640) { alert('Enter a height between 64 and 8640'); return; }
+  opt.h = v;
+  renderOptions();
+}
+function openExport(){
+  document.getElementById('export-modal').classList.remove('hidden');
+  document.getElementById('download-link').classList.add('hidden');
+  document.getElementById('progress-wrap').classList.add('hidden');
+  document.getElementById('export-btn').disabled = false;
+  document.getElementById('export-btn').innerText = 'Export';
+  renderOptions();
+}
+function closeExport(){ cancelExport = true; document.getElementById('export-modal').classList.add('hidden'); }
+
+// ----- saving files -----
+let lastExport = null;
+const isAndroid = () => /Android/i.test(navigator.userAgent);
+// Inside the Capacitor app (see build-apk.yml) files go straight into the phone gallery.
+function nativeSaver(){
+  const C = window.Capacitor;
+  if (!C || typeof C.isNativePlatform !== 'function' || !C.isNativePlatform()) return null;
+  return (C.Plugins && C.Plugins.GallerySaver) || (C.registerPlugin ? C.registerPlugin('GallerySaver') : null);
+}
+const b64Chunk = (blob, o, n) => new Promise((res, rej) => {
+  const fr = new FileReader();
+  fr.onload = () => res(String(fr.result).split(',')[1] || '');
+  fr.onerror = rej;
+  fr.readAsDataURL(blob.slice(o, o + n));
+});
+async function nativeSave(blob, name, saver, onProgress){
+  const CH = 3 * 512 * 1024;           // multiple of 3 so base64 pieces join cleanly
+  await saver.begin();
+  for (let o = 0; o < blob.size; o += CH) {
+    await saver.append({ data: await b64Chunk(blob, o, CH) });
+    if (onProgress) onProgress(Math.min(1, (o + CH) / blob.size));
+  }
+  return saver.finish({ name, mime: blob.type || 'video/mp4' });
+}
+async function saveBlob(blob, name, onProgress){
+  const saver = nativeSaver();
+  if (saver) {
+    try { await nativeSave(blob, name, saver, onProgress); return 'saved'; }
+    catch(e) { alert('Could not save to gallery: ' + ((e && e.message) || e)); return 'error'; }
+  }
+  try {
+    const file = new File([blob], name, { type: blob.type });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: name }); return 'shared'; }
+  } catch(e) { if (e && e.name === 'AbortError') return 'cancel'; }
+  // A plain Android WebView app cannot save files and a blob link there can crash it; real Chrome can
+  const realBrowser = !/; wv\)/.test(navigator.userAgent) && typeof navigator.share === 'function';
+  if (isAndroid() && !realBrowser) return 'unsupported';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  return 'downloaded';
+}
+function showSaveOverlay(url, kind){
+  if (kind === 'video') {
+    $('save-kind').innerText = '';
+    $('save-media').innerHTML = `<div class="text-sm text-slate-200 text-center max-w-xs leading-relaxed">Is APK se video seedha Gallery mein save nahi ho sakti (WebView ki hadd hai).<br><br>Gallery mein save ke liye <b>build-apk.yml</b> wala naya APK banayein, ya is page ko Chrome mein khol kar wahan Save video dabayein.</div>`;
+    $('save-overlay').firstElementChild.style.display = 'none';
+  } else {
+    $('save-overlay').firstElementChild.style.display = '';
+    $('save-kind').innerText = kind;
+    $('save-media').innerHTML = `<img src="${url}" style="max-height:68vh;max-width:100%;border-radius:8px">`;
+  }
+  $('save-overlay').classList.remove('hidden');
+}
+function closeSaveOverlay(){ $('save-overlay').classList.add('hidden'); $('save-media').innerHTML = ''; }
+async function saveExport(){
+  if (!lastExport) return;
+  const btn = $('download-link');
+  btn.disabled = true; btn.innerText = 'Saving...';
+  const r = await saveBlob(lastExport.blob, lastExport.name, p => { btn.innerText = `Saving... ${Math.round(p * 100)}%`; });
+  btn.disabled = false; btn.innerText = 'Save video';
+  if (r === 'saved') toast('Saved to gallery (Movies/CapCutEditor)');
+  else if (r === 'unsupported') showSaveOverlay('', 'video');
+}
+
+// ---------- Transitions between clips ----------
+const TRANS = [['none','None'],['fade','Dissolve'],['black','Fade black'],['white','Flash'],
+  ['slideL','Slide left'],['slideR','Slide right'],['slideU','Slide up'],['slideD','Slide down'],
+  ['pushL','Push left'],['pushR','Push right'],['zoomIn','Zoom in'],['zoomOut','Zoom out'],
+  ['wipeL','Wipe left'],['wipeR','Wipe right'],['blur','Blur']];
+// Draws one clip frame on black with the current colour filter (no text/overlays)
+function baseRender(ctx, W, H, src, sw, sh){
+  ctx.save();
+  ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+  if (sw && sh) { ctx.filter = currentFilter; drawContain(ctx, src, sw, sh, W, H); ctx.filter = 'none'; }
+  ctx.restore();
+}
+// A = last frame of the clip before, B = the new clip playing, p = progress 0..1
+function drawTransition(ctx, W, H, type, p, A, B){
+  const e = p < 0.5 ? 2*p*p : 1 - Math.pow(-2*p + 2, 2) / 2;
+  ctx.save();
+  ctx.filter = 'none'; ctx.globalAlpha = 1;
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+  const scaled = (img, k, a) => { ctx.save(); ctx.globalAlpha = a; ctx.translate(W/2, H/2); ctx.scale(k, k); ctx.drawImage(img, -W/2, -H/2); ctx.restore(); };
+  const dip = col => {
+    ctx.drawImage(e < 0.5 ? A : B, 0, 0);
+    ctx.globalAlpha = e < 0.5 ? e * 2 : (1 - e) * 2; ctx.fillStyle = col; ctx.fillRect(0, 0, W, H);
+  };
+  switch (type) {
+    case 'fade': ctx.drawImage(A, 0, 0); ctx.globalAlpha = e; ctx.drawImage(B, 0, 0); break;
+    case 'black': dip('#000'); break;
+    case 'white': dip('#fff'); break;
+    case 'slideL': ctx.drawImage(A, 0, 0); ctx.drawImage(B, W * (1 - e), 0); break;
+    case 'slideR': ctx.drawImage(A, 0, 0); ctx.drawImage(B, -W * (1 - e), 0); break;
+    case 'slideU': ctx.drawImage(A, 0, 0); ctx.drawImage(B, 0, H * (1 - e)); break;
+    case 'slideD': ctx.drawImage(A, 0, 0); ctx.drawImage(B, 0, -H * (1 - e)); break;
+    case 'pushL': ctx.drawImage(A, -W * e, 0); ctx.drawImage(B, W * (1 - e), 0); break;
+    case 'pushR': ctx.drawImage(A, W * e, 0); ctx.drawImage(B, -W * (1 - e), 0); break;
+    case 'zoomIn': ctx.drawImage(B, 0, 0); scaled(A, 1 + e * 0.8, 1 - e); break;
+    case 'zoomOut': ctx.drawImage(A, 0, 0); scaled(B, 1.8 - e * 0.8, e); break;
+    case 'wipeL': ctx.drawImage(A, 0, 0); ctx.beginPath(); ctx.rect(W * (1 - e), 0, W * e + 1, H); ctx.clip(); ctx.drawImage(B, 0, 0); break;
+    case 'wipeR': ctx.drawImage(A, 0, 0); ctx.beginPath(); ctx.rect(0, 0, W * e + 1, H); ctx.clip(); ctx.drawImage(B, 0, 0); break;
+    case 'blur':
+      ctx.filter = `blur(${(e * 18).toFixed(1)}px)`; ctx.drawImage(A, 0, 0);
+      ctx.filter = `blur(${((1 - e) * 18).toFixed(1)}px)`; ctx.globalAlpha = e; ctx.drawImage(B, 0, 0); break;
+    default: ctx.drawImage(B, 0, 0);
+  }
+  ctx.restore();
+}
+
+// ---------- Real export (canvas + MediaRecorder) ----------
+const MIME_LIST = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4',
+  'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+function supportedMimes(){ return window.MediaRecorder ? MIME_LIST.filter(m => MediaRecorder.isTypeSupported(m)) : []; }
+function pickMime(){ return supportedMimes()[0] || ''; }
+
+function drawContain(ctx, src, sw, sh, W, H){
+  const s = Math.min(W/sw, H/sh);
+  const w = sw*s, h = sh*s;
+  ctx.drawImage(src, (W-w)/2, (H-h)/2, w, h);
+}
+
+async function startExport(){
+  if (!clips.length) { alert('No clips to export'); return; }
+  if (isAndroid() && opt.h > 1440 && !confirm('This resolution is very heavy for a phone and can freeze the app. Continue anyway? (1080p is recommended)')) return;
+  let mime = pickMime();
+  if (!window.MediaRecorder || !mime) { alert('This browser does not support video export. Use Chrome.'); return; }
+
+  const {W,H} = outputSize();
+  await loadFonts();
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
+
+  const stream = canvas.captureStream(opt.fps);
+
+  // audio from video clips
+  const AC = window.AudioContext || window.webkitAudioContext;
+  const ac = new AC();
+  const dest = ac.createMediaStreamDestination();
+  dest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+
+  let recorder = null;
+  for (const m of supportedMimes()) {
+    try { recorder = new MediaRecorder(stream, { mimeType: m, videoBitsPerSecond: bitrate() }); mime = m; break; } catch(e) {}
+  }
+  if (!recorder) { alert('Cannot start encoder at this resolution. Try a lower one.'); return; }
+  const chunks = [];
+  recorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+
+  const btn = document.getElementById('export-btn');
+  const bar = document.getElementById('progress-bar');
+  const txt = document.getElementById('progress-text');
+  document.getElementById('progress-wrap').classList.remove('hidden');
+  document.getElementById('download-link').classList.add('hidden');
+  btn.disabled = true; btn.innerText = 'Exporting...';
+  cancelExport = false;
+
+  const done = new Promise(res => recorder.onstop = res);
+  recorder.start(500);
+
+  try {
+    if (savedCover && savedCover.first) {
+      txt.innerText = 'Adding thumbnail...';
+      const cc = renderCover(W, H, savedCover.text, savedCover.snap);
+      const c0 = performance.now();
+      await new Promise(res => {
+        (function l(){
+          if (cancelExport || performance.now() - c0 > 1000) return res();
+          ctx.drawImage(cc, 0, 0);
+          requestAnimationFrame(l);
+        })();
+      });
+    }
+    exportT0 = performance.now();
+    let ea = null;
+    if (audio) {
+      try {
+        await ac.resume();
+        ea = new Audio(audio.url);
+        const g = ac.createGain(); g.gain.value = audio.vol / 100;
+        ac.createMediaElementSource(ea).connect(g); g.connect(dest);
+        await ea.play();
+      } catch(e) { ea = null; }
+    }
+    const hasTr = clips.some((c, i) => i < clips.length - 1 && c.tr && c.tr.type !== 'none');
+    let prevRaw = null, rawCv = null, prevReady = false;
+    if (hasTr) {
+      prevRaw = document.createElement('canvas'); rawCv = document.createElement('canvas');
+      prevRaw.width = rawCv.width = W; prevRaw.height = rawCv.height = H;
+    }
+    const frameOut = (src, sw, sh, i, off) => {
+      const pt = i > 0 ? clips[i-1].tr : null;
+      const td = pt ? Math.min(pt.dur, (clips[i].end - clips[i].start) * 0.6) : 0;
+      if (hasTr && prevReady && pt && pt.type !== 'none' && off < td) {
+        baseRender(rawCv.getContext('2d'), W, H, src, sw, sh);
+        drawTransition(ctx, W, H, pt.type, Math.max(0, off) / td, prevRaw, rawCv);
+      } else baseRender(ctx, W, H, src, sw, sh);
+      drawOverlays(ctx, W, H, (performance.now() - exportT0) / 1000);
+    };
+    const keepLast = (src, sw, sh, i) => {
+      const tr = clips[i].tr;
+      if (hasTr && i < clips.length - 1 && tr && tr.type !== 'none') { baseRender(prevRaw.getContext('2d'), W, H, src, sw, sh); prevReady = true; }
+      else prevReady = false;
+    };
+    for (let i = 0; i < clips.length; i++) {
+      if (cancelExport) break;
+      const c = clips[i], cd = c.end - c.start;
+      txt.innerText = `Rendering clip ${i+1} of ${clips.length} at ${W}×${H}...`;
+      bar.style.width = (i / clips.length * 100) + '%';
+
+      if (isImg(c)) {
+        const img = new Image(); img.src = c.url;
+        await img.decode();
+        const t0 = performance.now(), DUR = cd * 1000;
+        await new Promise(res => {
+          (function loop(){
+            if (cancelExport) return res();
+            const p = (performance.now() - t0) / DUR;
+            frameOut(img, img.naturalWidth, img.naturalHeight, i, (performance.now() - t0) / 1000);
+            bar.style.width = ((i + Math.min(p,1)) / clips.length * 100) + '%';
+            p >= 1 ? res() : requestAnimationFrame(loop);
+          })();
+        });
+        keepLast(img, img.naturalWidth, img.naturalHeight, i);
+      } else {
+        const v = document.createElement('video');
+        v.src = c.url; v.playsInline = true; v.preload = 'auto';
+        await new Promise((res, rej) => { v.onloadedmetadata = res; v.onerror = rej; });
+        if (c.start > 0.05) { v.currentTime = c.start; await once(v, 'seeked'); }
+        if (trackMuted) v.muted = true;
+        else { try { ac.createMediaElementSource(v).connect(dest); } catch(e){} }
+        await v.play();
+        await new Promise(res => {
+          (function loop(){
+            if (cancelExport || v.ended || v.currentTime >= c.end - 0.04) return res();
+            frameOut(v, v.videoWidth, v.videoHeight, i, v.currentTime - c.start);
+            const p = (v.currentTime - c.start) / cd;
+            bar.style.width = ((i + Math.max(0, Math.min(1, p))) / clips.length * 100) + '%';
+            requestAnimationFrame(loop);
+          })();
+        });
+        keepLast(v, v.videoWidth, v.videoHeight, i);
+        v.pause(); v.removeAttribute('src'); v.load();
+      }
+    }
+    if (ea) ea.pause();
+  } catch(e) {
+    console.error(e);
+    txt.innerText = 'Export failed. Try a lower resolution.';
+  }
+
+  recorder.stop();
+  await done;
+  ac.close();
+  stream.getTracks().forEach(t => t.stop());
+
+  if (cancelExport) return;
+  const blob = new Blob(chunks, { type: mime.split(';')[0] });
+  if (!blob.size) { txt.innerText = 'Export failed. Try a lower resolution.'; btn.disabled = false; btn.innerText = 'Export'; return; }
+  const ext = mime.includes('mp4') ? 'mp4' : 'webm';
+  const a = document.getElementById('download-link');
+  lastExport = { blob, name: `video_${W}x${H}_${opt.fps}fps.${ext}` };
+  a.classList.remove('hidden');
+  bar.style.width = '100%';
+  txt.innerText = `Done. ${(blob.size/1048576).toFixed(1)} MB`;
+  btn.disabled = false; btn.innerText = 'Export again';
+}
+
+// ---------- Gallery / editor ----------
+const $ = id => document.getElementById(id);
+const PX = 40, IMG_DUR = 3, LW = 112;
+let clipSeq = 1, activeClip = 0, T = 0, playing = false, curIdx = -1;
+let imgStart = 0, imgOff = 0, trackMuted = false, audio = null, ovl = null;
+let S = [], TOTAL = 0, ignoreScrollUntil = 0, thumbJob = 0;
+let undoStack = [], redoStack = [], stopAt = Infinity, prevCv = null, trIdx = 0;
+const pv = $('preview-video'), pimg = $('preview-image'), bgAudio = new Audio();
+const isImg = c => c.type.startsWith('image');
+const fmt = t => { t = Math.max(0, Math.round(t)); return String(Math.floor(t/60)).padStart(2,'0') + ':' + String(t%60).padStart(2,'0'); };
+const esc = x => String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const once = (el, ev) => Promise.race([new Promise(r => el.addEventListener(ev, r, {once:true})), sleep(2500)]);
+
+function openPhoneGallery(kind){ $(kind === 'image' ? 'gallery-image' : 'gallery-video').click(); }
+function openAddMenu(){ $('add-menu').classList.remove('hidden'); }
+
+function makeClip(f){
+  const type = f.type || (/\.(jpe?g|png|webp|gif)$/i.test(f.name) ? 'image/jpeg' : 'video/mp4');
+  const c = { id: clipSeq++, url: URL.createObjectURL(f), type, start: 0, end: IMG_DUR, thumbs: [] };
+  c.ready = type.startsWith('image') ? new Promise(res => {
+    const im = new Image();
+    im.onload = () => { c.vw = im.naturalWidth; c.vh = im.naturalHeight; res(); };
+    im.onerror = () => res();
+    im.src = c.url;
+  }) : new Promise(res => {
+    const v = document.createElement('video');
+    v.preload = 'metadata'; v.muted = true;
+    v.onloadedmetadata = () => { c.end = isFinite(v.duration) && v.duration > 0 ? v.duration : 1; c.vw = v.videoWidth; c.vh = v.videoHeight; v.removeAttribute('src'); v.load(); res(); };
+    v.onerror = () => { c.end = 1; res(); };
+    v.src = c.url;
+  });
+  return c;
+}
+
+function handleFilesSelected(e){
+  const files = [...e.target.files];
+  if (!files.length) return;
+  pause();
+  clips = files.map(makeClip);
+  const grid = $('selected-media-grid');
+  grid.innerHTML = '';
+  clips.forEach((c,i) => {
+    const d = document.createElement('div');
+    d.className = 'aspect-square bg-slate-800 rounded-lg relative overflow-hidden border-2 border-cyan-400';
+    d.innerHTML = (isImg(c) ? `<img src="${c.url}" class="w-full h-full object-cover">` : `<video src="${c.url}" class="w-full h-full object-cover"></video>`)
+      + `<div class="absolute top-2 right-2 w-5 h-5 rounded-full bg-cyan-500 text-slate-950 font-bold text-xs flex items-center justify-center">${i+1}</div>`;
+    grid.appendChild(d);
+  });
+  e.target.value = '';
+  $('home-screen').classList.add('hidden');
+  $('gallery-screen').classList.remove('hidden');
+}
+
+async function goToEditor(){
+  if (!clips.length) { alert('Select at least one photo or video first'); return; }
+  await Promise.all(clips.map(c => c.ready));
+  undoStack = []; redoStack = [];
+  T = 0; activeClip = 0; trackMuted = false; audio = null; ovl = null; curIdx = -1; multi = false; selected.clear(); savedCover = null;
+  bgAudio.pause(); bgAudio.removeAttribute('src');
+  pv.removeAttribute('src'); pv.dataset.u = ''; pimg.dataset.u = '';
+  $('gallery-screen').classList.add('hidden');
+  $('editor-screen').classList.remove('hidden');
+  oc.style.pointerEvents = 'auto'; oc.style.touchAction = 'none';
+  renderOptions(); fitFrame(); renderTimeline(); seekTo(0); genThumbs(); updateUndoUI();
+}
+
+async function addMoreFiles(e){
+  const files = [...e.target.files];
+  e.target.value = '';
+  if (!files.length) return;
+  pause();
+  const fresh = files.map(makeClip);
+  await Promise.all(fresh.map(c => c.ready));
+  pushUndo();
+  const at = clips.length;
+  clips.push(...fresh);
+  activeClip = at;
+  renderTimeline(); seekTo(S[at]); genThumbs();
+  const sc = $('tl-scroll'); sc.scrollTop = 0;
+}
+
+// ----- layout & timeline -----
+function layout(){ S = []; let s = 0; clips.forEach(c => { S.push(s); s += c.end - c.start; }); TOTAL = s; }
+function locate(t){
+  let s = 0;
+  for (let i = 0; i < clips.length; i++) {
+    const d = clips[i].end - clips[i].start;
+    if (t < s + d || i === clips.length - 1) return { i, off: Math.max(0, Math.min(d, t - s)) };
+    s += d;
+  }
+  return { i: 0, off: 0 };
+}
+function setScroll(t){ ignoreScrollUntil = performance.now() + 100; $('tl-scroll').scrollLeft = t * PX; }
+function updateTime(){ $('t-cur').innerText = fmt(T); }
+function selectClip(){ document.querySelectorAll('.clip-sel').forEach((e,i) => e.style.display = i === activeClip ? 'block' : 'none'); }
+
+
+function renderTimeline(){
+  layout();
+  const W = $('tl-scroll').clientWidth || 360;
+  const pl = Math.max(0, W/2 - LW), stripW = TOTAL * PX;
+  let ruler = '';
+  for (let s = 0; s <= Math.floor(TOTAL); s++) {
+    ruler += s % 2 === 0
+      ? `<span style="position:absolute;left:${s*PX}px;top:2px;transform:translateX(-50%);white-space:nowrap">${fmt(s)}</span>`
+      : `<span style="position:absolute;left:${s*PX}px;top:9px;width:3px;height:3px;border-radius:50%;background:#6b7280;transform:translateX(-50%)"></span>`;
+  }
+  const first = clips[0];
+  const coverBg = savedCover ? savedCover.thumb : (first ? (isImg(first) ? first.url : ((first.thumbs || [])[0] || '')) : '');
+  const blocks = clips.map((c,i) => {
+    const w = (c.end - c.start) * PX;
+    const n = Math.max(1, Math.min(40, Math.round(w / 56)));
+    c.n = n;
+    let tiles = '';
+    for (let k = 0; k < n; k++) {
+      const bg = isImg(c) ? `background-image:url('${c.url}')` : ((c.thumbs || [])[k] ? `background-image:url('${c.thumbs[k]}')` : '');
+      tiles += `<div id="th-${c.id}-${k}" style="flex:1;min-width:0;background-size:cover;background-position:center;background-color:#2a2a2e;${bg}"></div>`;
+    }
+    return `<div onclick="clipTap(${i})" class="relative flex-shrink-0 overflow-hidden" style="width:${w}px;height:56px;border-radius:6px;border-right:2px solid #161618;box-sizing:border-box">
+      <div class="flex h-full w-full">${tiles}</div>
+      <div class="clip-sel absolute inset-0 pointer-events-none" style="border-radius:6px;box-shadow:inset 0 0 0 2px #fff;display:${i === activeClip ? 'block' : 'none'}"></div>
+      <div class="clip-chk" data-id="${c.id}" style="position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;border:2px solid #fff;display:none;align-items:center;justify-content:center"></div>
+      <span class="absolute left-1 bottom-0 text-[9px] text-white" style="text-shadow:0 0 3px #000">${fmt(c.end - c.start)}</span></div>`;
+  }).join('');
+  const junctions = clips.slice(0, -1).map((c, i) => {
+    const x = (S[i] + (c.end - c.start)) * PX - 11, on = c.tr && c.tr.type !== 'none';
+    return `<div onclick="event.stopPropagation();openTransition(${i})" title="Transition" style="position:absolute;z-index:5;left:${x}px;top:17px;width:22px;height:22px;border-radius:6px;background:${on ? '#19c8e8' : 'rgba(255,255,255,.92)'};color:#000;display:flex;align-items:center;justify-content:center;font-size:10px;box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer"><i class="fa-solid fa-right-left"></i></div>`;
+  }).join('');
+  const tile = ic => `<div style="width:36px;height:36px;border-radius:8px;background:#2a2a2e;display:flex;align-items:center;justify-content:center;color:#cbd5e1"><i class="${ic}"></i></div>`;
+  const left = inner => `<div style="width:${LW}px;flex-shrink:0;display:flex;justify-content:flex-end;align-items:center;padding-right:6px">${inner}</div>`;
+  const bar = (bg, col, w, inner, tool) => `<div onclick="openTool('${tool}')" style="width:${w}px;height:36px;border-radius:6px;background:${bg};color:${col};display:flex;align-items:center;padding:0 10px;font-size:12px;overflow:hidden;white-space:nowrap">${inner}</div>`;
+  const minW = Math.max(TOTAL * PX, 170);
+
+  const audioBar = audio
+    ? bar('#1f6f5f', '#e6fffa', Math.max(70, Math.min(audio.dur, TOTAL) * PX), `<i class="fa-solid fa-music mr-2"></i>${esc(audio.name)}`, 'Audio')
+    : bar('#232326', '#9ca3af', minW, `<i class="fa-solid fa-plus mr-2"></i>Add audio`, 'Audio');
+  const hasText = items.text.text.trim(), hasCap = items.caption.text.trim();
+  const textBar = hasText
+    ? bar('#7a4f12', '#fff7e6', Math.max(70, TOTAL * PX), `<i class="fa-solid fa-font mr-2"></i>${esc(items.text.text.split('\n')[0])}`, 'Text')
+    : bar('#232326', '#9ca3af', minW, `<i class="fa-solid fa-plus mr-2"></i>Add text`, 'Text');
+  const capRow = hasCap ? `<div style="display:flex">${left(tile('fa-regular fa-closed-captioning'))}${bar('#4c3a7a', '#f3e8ff', Math.max(70, TOTAL * PX), esc(items.caption.text.split('\n')[0]), 'Captions')}</div>` : '';
+
+  $('tl-inner').innerHTML = `<div style="display:flex;flex-direction:column;gap:6px;width:max-content;padding:2px ${W/2 + 40}px 8px ${pl}px">
+    <div style="height:22px;margin-left:${LW}px;position:relative;width:${stripW}px;color:#9ca3af;font-size:10px">${ruler}</div>
+    <div style="display:flex;align-items:center">
+      ${left(`<div onclick="toggleMute()" style="width:44px;display:flex;flex-direction:column;align-items:center;font-size:10px;color:#e5e7eb;cursor:pointer"><i id="mute-icon" class="fa-solid fa-volume-high text-lg"></i><span id="mute-label" style="margin-top:2px;white-space:nowrap">Mute clip</span></div>
+        <div id="cover-tile" onclick="openCover()" style="position:relative;width:56px;height:56px;border-radius:8px;overflow:hidden;background:#2a2a2e center/cover;${coverBg ? `background-image:url('${coverBg}')` : ''};cursor:pointer"><div style="position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px"><i class="fa-solid fa-pen" style="font-size:11px"></i><span>Cover</span></div></div>`)}
+      <div style="display:flex;position:relative;width:${stripW}px">${blocks}${junctions}</div>
+    </div>
+    <div style="display:flex">${left(tile('fa-solid fa-music'))}${audioBar}</div>
+    <div style="display:flex">${left(tile('fa-solid fa-font'))}${textBar}</div>
+    ${capRow}
+  </div>`;
+  $('t-tot').innerText = fmt(TOTAL);
+  updateMuteUI(); updateTime(); setScroll(T); renderSel();
+}
+
+async function genThumbs(){
+  const job = ++thumbJob;
+  const v = document.createElement('video');
+  v.muted = true; v.preload = 'auto'; v.playsInline = true;
+  const cv = document.createElement('canvas'); cv.width = 96; cv.height = 96;
+  const cx = cv.getContext('2d');
+  for (const c of clips.slice()) {
+    if (isImg(c)) continue;
+    const n = c.n || 1, key = `${c.url}|${c.start.toFixed(2)}|${c.end.toFixed(2)}|${n}`;
+    if (c._tk === key) continue;
+    if (v.dataset.u !== c.url) { v.dataset.u = c.url; v.src = c.url; await once(v, 'loadeddata'); }
+    const arr = [];
+    for (let k = 0; k < n; k++) {
+      if (job !== thumbJob) { v.removeAttribute('src'); v.load(); return; }
+      const t = c.start + (k + 0.5) * (c.end - c.start) / n;
+      v.currentTime = Math.max(0, Math.min(t, (v.duration || t) - 0.05));
+      await once(v, 'seeked');
+      if (!v.videoWidth) continue;
+      const sq = Math.min(v.videoWidth, v.videoHeight);
+      cx.drawImage(v, (v.videoWidth - sq)/2, (v.videoHeight - sq)/2, sq, sq, 0, 0, 96, 96);
+      const url = cv.toDataURL('image/jpeg', 0.6);
+      arr[k] = url;
+      const el = $(`th-${c.id}-${k}`);
+      if (el) el.style.backgroundImage = `url('${url}')`;
+      if (k === 0 && c === clips[0] && !savedCover && $('cover-tile')) $('cover-tile').style.backgroundImage = `url('${url}')`;
+    }
+    c.thumbs = arr; c._tk = key;
+  }
+  v.removeAttribute('src'); v.load();
+}
+
+// ----- preview frame & player -----
+function fitFrame(){
+  const st = $('stage'), r = ratioDims(opt.ratio), ar = r.w / r.h;
+  const cw = st.clientWidth - 16, ch = st.clientHeight - 8;
+  if (cw <= 0 || ch <= 0) return;
+  let w, h;
+  if (cw / ch > ar) { h = ch; w = h * ar; } else { w = cw; h = w / ar; }
+  $('frame').style.width = w + 'px'; $('frame').style.height = h + 'px';
+}
+window.addEventListener('resize', () => { if (!$('editor-screen').classList.contains('hidden')) { fitFrame(); renderTimeline(); } });
+function goFullscreen(){ const f = $('frame'); (f.requestFullscreen || f.webkitRequestFullscreen || (() => {})).call(f); }
+
+function setPreviewFilter(){ pv.style.filter = currentFilter; pimg.style.filter = currentFilter; }
+
+const tcv = $('trans-canvas'), tctx = tcv.getContext('2d'), toCv = document.createElement('canvas');
+function hideTrans(){ tcv.style.display = 'none'; prevCv = null; }
+function frameSize(){ return { w: Math.round($('frame').clientWidth), h: Math.round($('frame').clientHeight) }; }
+function srcOf(c){ return isImg(c) ? [pimg, pimg.naturalWidth, pimg.naturalHeight] : [pv, pv.videoWidth, pv.videoHeight]; }
+// remember the last frame of the clip that just ended (used as the "from" picture of the transition)
+function snapPrevFrame(i){
+  const tr = clips[i].tr, {w, h} = frameSize();
+  if (!tr || tr.type === 'none' || !w || !h) { prevCv = null; return; }
+  prevCv = prevCv || document.createElement('canvas');
+  prevCv.width = w; prevCv.height = h;
+  const [src, sw, sh] = srcOf(clips[i]);
+  baseRender(prevCv.getContext('2d'), w, h, src, sw, sh);
+}
+function updatePreviewTransition(c, off){
+  const tr = curIdx > 0 ? clips[curIdx - 1].tr : null;
+  if (!prevCv || !tr || tr.type === 'none') { if (tcv.style.display !== 'none') hideTrans(); return; }
+  const td = Math.min(tr.dur, (c.end - c.start) * 0.6), p = Math.max(0, off) / td;
+  if (p >= 1) { hideTrans(); return; }
+  const w = prevCv.width, h = prevCv.height;
+  if (tcv.width !== w || tcv.height !== h) { tcv.width = w; tcv.height = h; }
+  toCv.width = w; toCv.height = h;
+  const [src, sw, sh] = srcOf(c);
+  baseRender(toCv.getContext('2d'), w, h, src, sw, sh);
+  drawTransition(tctx, w, h, tr.type, p, prevCv, toCv);
+  tcv.style.display = 'block';
+}
+function openTransition(i){ trIdx = i; openPanel('transition'); }
+function setTrans(type){
+  const c = clips[trIdx];
+  c.tr = { type, dur: c.tr ? c.tr.dur : 0.5 };
+  renderPanel();
+  if (type !== 'none') previewTransition();
+}
+function setTransDur(v){ const c = clips[trIdx]; c.tr = { type: c.tr ? c.tr.type : 'none', dur: v }; }
+function applyTransAll(){
+  const t = clips[trIdx].tr || { type: 'none', dur: 0.5 };
+  clips.forEach((c, i) => { if (i < clips.length - 1) c.tr = { ...t }; });
+  toast('Applied to all clips');
+}
+function previewTransition(){
+  if (trIdx >= clips.length - 1) return;
+  seekTo(Math.max(0, S[trIdx + 1] - 1.2)); play();
+  const tr = clips[trIdx].tr;
+  stopAt = S[trIdx + 1] + Math.min(tr ? tr.dur : 0.5, 2) + 0.8;
+}
+
+function loadAt(i, off){
+  const c = clips[i];
+  curIdx = i;
+  if (isImg(c)) {
+    pv.pause(); pv.classList.add('hidden'); pimg.classList.remove('hidden');
+    if (pimg.dataset.u !== c.url) { pimg.src = c.url; pimg.dataset.u = c.url; }
+    imgOff = off; imgStart = performance.now();
+  } else {
+    pimg.classList.add('hidden'); pv.classList.remove('hidden');
+    pv.muted = trackMuted;
+    const target = c.start + off;
+    if (pv.dataset.u !== c.url) {
+      pv.dataset.u = c.url; pv.src = c.url;
+      pv.addEventListener('loadedmetadata', () => { pv.currentTime = target; if (playing) pv.play().catch(() => {}); }, {once:true});
+    } else if (Math.abs(pv.currentTime - target) > 0.15) pv.currentTime = target;
+  }
+}
+function seekTo(t, scrollIt = true){
+  if (!clips.length) return;
+  hideTrans();
+  T = Math.max(0, Math.min(TOTAL, t));
+  const {i, off} = locate(T);
+  activeClip = i; selectClip();
+  loadAt(i, off);
+  updateTime();
+  if (scrollIt) setScroll(T);
+}
+function togglePlayPause(){ playing ? pause() : play(); }
+function play(){
+  if (!clips.length) return;
+  if (T >= TOTAL - 0.05) T = 0;
+  stopAt = Infinity; hideTrans();
+  const {i, off} = locate(T);
+  activeClip = i; selectClip();
+  loadAt(i, off);
+  playing = true;
+  if (isImg(clips[i])) { imgOff = off; imgStart = performance.now(); }
+  else if (pv.readyState > 0) pv.play().catch(() => {});
+  if (audio && T < audio.dur) { bgAudio.currentTime = T; bgAudio.volume = audio.vol / 100; bgAudio.play().catch(() => {}); }
+  $('play-pause-icon').className = 'fa-solid fa-pause';
+}
+function pause(){
+  playing = false; pv.pause(); bgAudio.pause();
+  $('play-pause-icon').className = 'fa-solid fa-play';
+}
+(function tick(){
+  requestAnimationFrame(tick);
+  if (!playing) return;
+  const c = clips[curIdx];
+  if (!c) { pause(); return; }
+  const d = c.end - c.start;
+  let off = isImg(c) ? imgOff + (performance.now() - imgStart) / 1000 : pv.currentTime - c.start;
+  if (!isImg(c) && pv.ended) off = d;
+  if (off >= d - 0.04) {
+    if (curIdx < clips.length - 1) {
+      const nx = curIdx + 1;
+      snapPrevFrame(curIdx);
+      activeClip = nx; selectClip(); loadAt(nx, 0);
+      if (isImg(clips[nx])) { imgOff = 0; imgStart = performance.now(); } else pv.play().catch(() => {});
+      T = S[nx];
+    } else { T = TOTAL; pause(); updateTime(); setScroll(T); }
+    return;
+  }
+  T = S[curIdx] + Math.max(0, off);
+  updatePreviewTransition(c, off);
+  if (T >= stopAt) { pause(); return; }
+  updateTime(); setScroll(T);
+})();
+$('tl-scroll').addEventListener('scroll', () => {
+  if (performance.now() < ignoreScrollUntil) return;
+  if (playing) pause();
+  seekTo($('tl-scroll').scrollLeft / PX, false);
+});
+$('tl-scroll').addEventListener('touchstart', () => { if (playing) pause(); }, {passive:true});
+
+// ----- mute / undo / clip tools -----
+function toggleMute(){ pushUndo(); trackMuted = !trackMuted; pv.muted = trackMuted; updateMuteUI(); }
+function updateMuteUI(){
+  const i = $('mute-icon'), l = $('mute-label');
+  if (!i) return;
+  i.className = 'fa-solid text-lg ' + (trackMuted ? 'fa-volume-xmark' : 'fa-volume-high');
+  l.innerText = trackMuted ? 'Unmute' : 'Mute clip';
+}
+function snap(){
+  return { clips: clips.map(c => ({...c})), items: JSON.stringify(items), filt: {...filt}, muted: trackMuted,
+           audio: audio ? {...audio} : null, ovl: ovl ? {...ovl} : null, active: activeClip };
+}
+function pushUndo(){ undoStack.push(snap()); if (undoStack.length > 50) undoStack.shift(); redoStack = []; updateUndoUI(); }
+function applySnap(sn){
+  pause();
+  clips = sn.clips.map(c => ({...c}));
+  const it = JSON.parse(sn.items);
+  Object.assign(items.text, it.text); Object.assign(items.caption, it.caption);
+  Object.assign(filt, sn.filt); updateFilter();
+  trackMuted = sn.muted; pv.muted = trackMuted;
+  audio = sn.audio ? {...sn.audio} : null;
+  if (audio) bgAudio.src = audio.url; else { bgAudio.removeAttribute('src'); }
+  ovl = sn.ovl ? {...sn.ovl} : null;
+  activeClip = Math.min(sn.active, clips.length - 1);
+  renderTimeline(); seekTo(Math.min(T, TOTAL)); genThumbs();
+}
+function undo(){ if (!undoStack.length) return; redoStack.push(snap()); applySnap(undoStack.pop()); updateUndoUI(); }
+function redo(){ if (!redoStack.length) return; undoStack.push(snap()); applySnap(redoStack.pop()); updateUndoUI(); }
+function updateUndoUI(){ $('undo-btn').style.opacity = undoStack.length ? 1 : 0.35; $('redo-btn').style.opacity = redoStack.length ? 1 : 0.35; }
+
+// ----- multi-select + clip tools -----
+let multi = false;
+const selected = new Set();
+function updateMultiUI(){
+  $('multi-label').innerText = multi ? `Done (${selected.size})` : 'Select';
+  $('multi-icon').className = multi ? 'fa-solid fa-square-check' : 'fa-regular fa-square-check';
+}
+function renderSel(){
+  document.querySelectorAll('.clip-chk').forEach(e => {
+    const on = selected.has(+e.dataset.id);
+    e.style.display = multi ? 'flex' : 'none';
+    e.style.background = on ? '#19c8e8' : 'rgba(0,0,0,.5)';
+    e.innerHTML = on ? '<i class="fa-solid fa-check" style="font-size:10px;color:#000"></i>' : '';
+  });
+}
+function toggleMulti(){
+  multi = !multi; selected.clear();
+  if (multi && clips[activeClip]) selected.add(clips[activeClip].id);
+  updateMultiUI(); renderSel();
+}
+function selectAll(){ multi = true; clips.forEach(c => selected.add(c.id)); updateMultiUI(); renderSel(); }
+function clipTap(i){
+  pause(); activeClip = i; selectClip();
+  if (multi) {
+    const id = clips[i].id;
+    selected.has(id) ? selected.delete(id) : selected.add(id);
+    updateMultiUI(); renderSel();
+  }
+  seekTo(S[i]);
+}
+function targetIdx(){
+  if (multi) {
+    if (!selected.size) { alert('Tap the clips you want to select first.'); return null; }
+    return clips.map((c,i) => selected.has(c.id) ? i : -1).filter(i => i >= 0);
+  }
+  return [activeClip];
+}
+function afterClipEdit(activeId){
+  const k = clips.findIndex(c => c.id === activeId);
+  activeClip = k >= 0 ? k : Math.min(activeClip, clips.length - 1);
+  renderTimeline(); seekTo(S[activeClip]); genThumbs();
+}
+function splitClip(){
+  pause();
+  const {i, off} = locate(T);
+  const c = clips[i], d = c.end - c.start;
+  if (off < 0.2 || d - off < 0.2) { alert('Move the playhead inside the clip (not at its edge) to split it.'); return; }
+  pushUndo();
+  const cut = c.start + off;
+  clips.splice(i, 1, {...c, end: cut, tr: null, _tk: null, thumbs: []}, {...c, id: clipSeq++, start: cut, _tk: null, thumbs: []});
+  activeClip = i;
+  renderTimeline(); seekTo(T); genThumbs();
+}
+function moveClip(dir){
+  const idx = targetIdx(); if (!idx) return;
+  pause();
+  const before = snap(), activeId = clips[activeClip].id, ids = new Set(idx.map(i => clips[i].id));
+  let moved = false;
+  (dir < 0 ? idx : idx.slice().reverse()).forEach(i => {
+    const j = i + dir;
+    if (j < 0 || j >= clips.length || ids.has(clips[j].id)) return;
+    [clips[i], clips[j]] = [clips[j], clips[i]]; moved = true;
+  });
+  if (!moved) return;
+  undoStack.push(before); redoStack = []; updateUndoUI();
+  afterClipEdit(activeId);
+}
+function duplicateClip(){
+  const idx = targetIdx(); if (!idx) return;
+  pause(); pushUndo();
+  const activeId = clips[activeClip].id;
+  idx.slice().reverse().forEach(i => clips.splice(i + 1, 0, {...clips[i], id: clipSeq++}));
+  afterClipEdit(activeId);
+}
+function deleteClip(){
+  const idx = targetIdx(); if (!idx) return;
+  if (!confirm(idx.length > 1 ? `Delete ${idx.length} clips?` : `Delete clip ${idx[0] + 1}?`)) return;
+  pause(); pushUndo();
+  const ids = new Set(idx.map(i => clips[i].id));
+  clips = clips.filter(c => !ids.has(c.id));
+  selected.clear(); updateMultiUI();
+  if (!clips.length) { multi = false; backToHome(); return; }
+  activeClip = Math.min(activeClip, clips.length - 1);
+  afterClipEdit(clips[activeClip].id);
+}
+
+// ----- audio & overlay files -----
+function addAudio(e){
+  const f = e.target.files[0];
+  e.target.value = '';
+  if (!f) return;
+  const url = URL.createObjectURL(f);
+  const a = new Audio();
+  a.onloadedmetadata = () => {
+    if (panelKind !== 'audio') pushUndo();
+    audio = { url, name: f.name, dur: isFinite(a.duration) ? a.duration : 1, vol: audio ? audio.vol : 100 };
+    bgAudio.src = url;
+    renderTimeline();
+    if (panelKind === 'audio') renderPanel(); else openPanel('audio');
+  };
+  a.src = url;
+}
+function addOverlay(e){
+  const f = e.target.files[0];
+  e.target.value = '';
+  if (!f) return;
+  const url = URL.createObjectURL(f), img = new Image();
+  img.onload = () => { ovl = Object.assign(ovl || {size:40, x:50, y:50, op:100}, {img, url}); renderPanel(); };
+  img.src = url;
+}
+
+// ---------- Text, filters, thumbnail ----------
+const FONTS = [
+  {n:'Classic', f:'Arial, Helvetica, sans-serif', w:'bold'},
+  {n:'Serif', f:'Georgia, serif', w:'bold'},
+  {n:'Mono', f:"'Courier New', monospace", w:'bold'},
+  {n:'Impact', f:'Impact, Haettenschweiler, sans-serif', w:'normal'},
+  {n:'Bebas', f:"'Bebas Neue', Impact, sans-serif", w:'normal'},
+  {n:'Oswald', f:"'Oswald', Arial, sans-serif", w:'600'},
+  {n:'Lobster', f:"'Lobster', cursive", w:'normal'},
+  {n:'Pacifico', f:"'Pacifico', cursive", w:'normal'},
+  {n:'Marker', f:"'Permanent Marker', cursive", w:'normal'},
+  {n:'اردو', f:"'Noto Nastaliq Urdu', serif", w:'700'}
+];
+const COLORS = ['#ffffff','#000000','#facc15','#f97316','#ef4444','#ec4899','#a855f7','#3b82f6','#22d3ee','#22c55e','#84cc16','#94a3b8'];
+const BGS = [['none','None'],['box','Box'],['outline','Outline'],['shadow','Shadow'],['neon','Neon']];
+const ANIMS = [['none','None'],['fade','Fade in'],['slideUp','Slide up'],['slideLeft','Slide in'],['zoom','Zoom'],['bounce','Bounce'],['typewriter','Typewriter'],['pulse','Pulse']];
+const POS = [['Top',14],['Center',50],['Bottom',84]];
+const PRESETS = [
+  ['Normal','none'],['Vivid','saturate(1.5) contrast(1.1)'],['Warm','sepia(.3) saturate(1.3) hue-rotate(-10deg)'],
+  ['Cool','saturate(1.1) hue-rotate(15deg) brightness(1.05)'],['Vintage','sepia(.5) contrast(.9) brightness(1.1)'],
+  ['B&W','grayscale(1)'],['Noir','grayscale(1) contrast(1.4)'],['Sepia','sepia(1)'],['Fade','contrast(.85) brightness(1.1) saturate(.8)'],
+  ['Dramatic','contrast(1.4) saturate(1.2) brightness(.9)'],['Pop','saturate(2) contrast(1.15)'],['Invert','invert(1)']
+];
+
+function newText(o){ return Object.assign({text:'', font:0, color:'#ffffff', size:8, bg:'box', anim:'fade', x:50, y:50}, o || {}); }
+const items = { text: newText(), caption: newText({color:'#facc15', size:6, bg:'shadow', y:84, anim:'typewriter'}) };
+const filt = { preset:0, b:100, c:100, s:100, blur:0 };
+let animStart = performance.now();
+let panelKind = null, panelTab = 0;
+
+function loadFonts(){
+  return Promise.all(FONTS.map(f => document.fonts.load(`${f.w} 24px ${f.f}`, 'Aa اردو').catch(() => {}))).then(() => {});
+}
+
+// ----- text drawing (used by preview, export and thumbnail) -----
+const easeOut = x => 1 - Math.pow(1 - x, 3);
+function easeBounce(x){
+  const n = 7.5625, d = 2.75;
+  if (x < 1/d) return n*x*x;
+  if (x < 2/d) return n*(x -= 1.5/d)*x + .75;
+  if (x < 2.5/d) return n*(x -= 2.25/d)*x + .9375;
+  return n*(x -= 2.625/d)*x + .984375;
+}
+function animState(anim, t, len){
+  const a = {alpha:1, dx:0, dy:0, scale:1, chars:null};
+  const p = Math.min(1, t / 0.8);
+  if (anim === 'fade') a.alpha = p;
+  else if (anim === 'slideUp') { a.dy = (1 - easeOut(p)) * 0.15; a.alpha = p; }
+  else if (anim === 'slideLeft') { a.dx = (1 - easeOut(p)) * 0.5; a.alpha = p; }
+  else if (anim === 'zoom') { a.scale = 0.3 + 0.7 * easeOut(p); a.alpha = p; }
+  else if (anim === 'bounce') { a.dy = -(1 - easeBounce(p)) * 0.4; a.alpha = Math.min(1, t / 0.2); }
+  else if (anim === 'typewriter') a.chars = Math.min(1, t / Math.min(2.5, Math.max(0.8, len * 0.07)));
+  else if (anim === 'pulse') a.scale = 1 + 0.08 * Math.sin(t * 5);
+  return a;
+}
+function isLight(hex){
+  const n = parseInt(hex.slice(1), 16);
+  return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255 > 0.6;
+}
+function drawTextItem(ctx, W, H, st, t){
+  if (!st.text.trim()) return;
+  const f = FONTS[st.font];
+  const a = animState(st.anim, t, st.text.length);
+  const full = st.text.split('\n');
+  const shown = a.chars === null ? st.text : st.text.slice(0, Math.ceil(st.text.length * a.chars));
+  const lines = shown.split('\n');
+  const size = Math.min(W, H) * st.size / 100;
+  ctx.save();
+  ctx.filter = 'none';
+  ctx.font = `${f.w} ${size}px ${f.f}`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const maxw = Math.max(1, ...full.map(l => ctx.measureText(l).width));
+  const fit = Math.min(1, W * 0.9 / (maxw + size));
+  const lh = size * 1.35, th = lh * full.length;
+  ctx.translate(W * st.x / 100 + a.dx * W, H * st.y / 100 + a.dy * H);
+  ctx.scale(a.scale * fit, a.scale * fit);
+  ctx.globalAlpha = a.alpha;
+  if (st.bg === 'box') {
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.beginPath();
+    const bx = -maxw/2 - size*0.5, by = -th/2 - size*0.1, bw = maxw + size, bh = th + size*0.2;
+    ctx.roundRect ? ctx.roundRect(bx, by, bw, bh, size*0.3) : ctx.rect(bx, by, bw, bh);
+    ctx.fill();
+  }
+  lines.forEach((ln, i) => {
+    const y = -th/2 + lh * (i + 0.5);
+    if (st.bg === 'outline') {
+      ctx.lineJoin = 'round'; ctx.lineWidth = size * 0.18;
+      ctx.strokeStyle = isLight(st.color) ? '#000' : '#fff';
+      ctx.strokeText(ln, 0, y);
+    } else if (st.bg === 'shadow') {
+      ctx.shadowColor = 'rgba(0,0,0,0.85)'; ctx.shadowBlur = size * 0.2;
+      ctx.shadowOffsetX = size * 0.06; ctx.shadowOffsetY = size * 0.06;
+    } else if (st.bg === 'neon') {
+      ctx.shadowColor = st.color; ctx.shadowBlur = size * 0.6;
+    }
+    ctx.fillStyle = st.color;
+    ctx.fillText(ln, 0, y);
+    if (st.bg === 'neon') ctx.fillText(ln, 0, y);
+  });
+  ctx.restore();
+}
+function drawOverlays(ctx, W, H, t){
+  if (ovl && ovl.img && ovl.img.complete && ovl.img.naturalWidth) {
+    const w = W * ovl.size / 100, h = w * ovl.img.naturalHeight / ovl.img.naturalWidth;
+    ctx.save(); ctx.filter = 'none'; ctx.globalAlpha = ovl.op / 100;
+    ctx.drawImage(ovl.img, W * ovl.x / 100 - w/2, H * ovl.y / 100 - h/2, w, h);
+    ctx.restore();
+  }
+  drawTextItem(ctx, W, H, items.text, t);
+  drawTextItem(ctx, W, H, items.caption, t);
+}
+
+// ----- live preview overlay -----
+const oc = document.getElementById('overlay-canvas');
+const octx = oc.getContext('2d');
+(function previewLoop(){
+  requestAnimationFrame(previewLoop);
+  if (document.getElementById('editor-screen').classList.contains('hidden')) return;
+  const dpr = window.devicePixelRatio || 1;
+  const w = Math.round(oc.clientWidth * dpr), h = Math.round(oc.clientHeight * dpr);
+  if (!w || !h) return;
+  if (oc.width !== w || oc.height !== h) { oc.width = w; oc.height = h; }
+  octx.clearRect(0, 0, w, h);
+  drawOverlays(octx, w, h, ((performance.now() - animStart) / 1000) % 4);
+  const sk = isTextPanel() ? panelKind : (performance.now() < selUntil ? selKey : null);
+  if (sk && items[sk].text.trim()) {
+    const b = textBox(w, h, items[sk]), pad = Math.min(w, h) * 0.015;
+    octx.save(); octx.setLineDash([10, 7]); octx.lineWidth = Math.max(2, w * 0.005); octx.strokeStyle = '#22d3ee';
+    octx.strokeRect(b.cx - b.w / 2 - pad, b.cy - b.h / 2 - pad, b.w + pad * 2, b.h + pad * 2);
+    octx.restore();
+  }
+})();
+
+// ----- filters -----
+function updateFilter(){
+  const parts = [];
+  const p = PRESETS[filt.preset][1];
+  if (p !== 'none') parts.push(p);
+  if (filt.b !== 100) parts.push(`brightness(${filt.b}%)`);
+  if (filt.c !== 100) parts.push(`contrast(${filt.c}%)`);
+  if (filt.s !== 100) parts.push(`saturate(${filt.s}%)`);
+  if (filt.blur > 0) parts.push(`blur(${filt.blur}px)`);
+  currentFilter = parts.join(' ') || 'none';
+  setPreviewFilter();
+}
+function setFilt(k, v, noRender){ filt[k] = v; updateFilter(); if (!noRender) renderPanel(); }
+
+// ----- bottom panels (text / captions / effects / audio / overlay) -----
+let panelKey = '', panelSnap = null;
+function stateKey(){
+  return JSON.stringify([items, filt, clips.map(c => c.tr || null), audio ? [audio.url, audio.vol] : null, ovl ? [ovl.url, ovl.size, ovl.x, ovl.y, ovl.op] : null]);
+}
+function openTool(name){
+  if (name === 'Edit') { $('tools-bar').classList.add('hidden'); $('edit-bar').classList.remove('hidden'); }
+  else if (name === 'Text') openPanel('text');
+  else if (name === 'Captions') openPanel('caption');
+  else if (name === 'Effects') openPanel('filters');
+  else if (name === 'Overlay') openPanel('overlay');
+  else if (name === 'Ratio') openPanel('format');
+  else if (name === 'Audio') { audio ? openPanel('audio') : $('audio-input').click(); }
+}
+function closeEditBar(){ multi = false; selected.clear(); updateMultiUI(); renderSel(); $('edit-bar').classList.add('hidden'); $('tools-bar').classList.remove('hidden'); }
+function isTextPanel(){ return panelKind === 'text' || panelKind === 'caption'; }
+function openPanel(kind){
+  pause();
+  panelKey = stateKey(); panelSnap = snap();
+  panelKind = kind; panelTab = 0;
+  ['tl-section', 'tools-bar', 'edit-bar'].forEach(id => $(id).classList.add('hidden'));
+  $('edit-panel').classList.remove('hidden');
+  $('panel-title').innerText = {text:'Text', caption:'Captions', filters:'Effects', audio:'Audio', overlay:'Overlay', format:'Ratio & frame rate', transition:'Transition'}[kind];
+  const ta = $('panel-text');
+  $('panel-text-row').classList.toggle('hidden', !isTextPanel());
+  oc.style.pointerEvents = isTextPanel() ? 'auto' : 'none';
+  oc.style.touchAction = isTextPanel() ? 'none' : 'auto';
+  if (isTextPanel() && !openPanel.hinted) { openPanel.hinted = true; toast('Touch the text and drag anywhere · pinch with 2 fingers to resize'); }
+  if (isTextPanel()) { ta.value = items[kind].text; animStart = performance.now(); loadFonts().then(renderPanel); }
+  renderPanel();
+  fitFrame();
+}
+function closePanel(){
+  pause(); hideTrans();
+  if (panelKind && stateKey() !== panelKey) { undoStack.push(panelSnap); redoStack = []; updateUndoUI(); }
+  panelKind = null;
+  oc.style.pointerEvents = 'auto'; oc.style.touchAction = 'none';
+  $('edit-panel').classList.add('hidden');
+  $('tl-section').classList.remove('hidden');
+  $('tools-bar').classList.remove('hidden');
+  fitFrame(); renderTimeline();
+}
+function panelDelete(){
+  if (isTextPanel()) { items[panelKind].text = ''; $('panel-text').value = ''; }
+  else if (panelKind === 'filters') { Object.assign(filt, {preset:0, b:100, c:100, s:100, blur:0}); updateFilter(); renderPanel(); }
+  else if (panelKind === 'audio') { audio = null; bgAudio.pause(); bgAudio.removeAttribute('src'); closePanel(); }
+  else if (panelKind === 'overlay') { ovl = null; renderPanel(); }
+  else if (panelKind === 'transition') { clips[trIdx].tr = null; renderPanel(); }
+}
+function setPos(y){ const st = items[panelKind]; st.x = 50; st.y = y; renderPanel(); }
+function bumpSize(d){
+  const st = items[panelKind];
+  st.size = Math.max(2, Math.min(30, Math.round((st.size + d) * 2) / 2));
+  if (panelTab === 4) renderPanel();
+}
+// Drag text anywhere on the preview (works any time, not only inside the Text panel).
+// One finger = move, two fingers = resize, tap on the text = open its panel.
+const ptrs = new Map();
+let pinch = { size: 8, d0: 0 };
+let dragKey = null, dragStart = null, dragMoved = false, dragHit = false, dragUndone = false;
+let selKey = null, selUntil = 0;
+const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
+function pinchDist(){ const a = [...ptrs.values()]; return a.length < 2 ? 0 : Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); }
+function textBox(W, H, st){
+  const f = FONTS[st.font], size = Math.min(W, H) * st.size / 100;
+  octx.save(); octx.font = `${f.w} ${size}px ${f.f}`;
+  const full = st.text.split('\n');
+  const maxw = Math.max(1, ...full.map(l => octx.measureText(l).width));
+  octx.restore();
+  const fit = Math.min(1, W * 0.9 / (maxw + size));
+  return { cx: W * st.x / 100, cy: H * st.y / 100, w: (maxw + size) * fit, h: (size * 1.35 * full.length + size * 0.2) * fit };
+}
+function evPt(e){
+  const r = oc.getBoundingClientRect();
+  return { x: (e.clientX - r.left) * oc.width / (r.width || 1), y: (e.clientY - r.top) * oc.height / (r.height || 1) };
+}
+// the text under the finger, or else the nearest one (so you can grab it from anywhere)
+function pickItem(px, py){
+  const W = oc.width, H = oc.height, pad = Math.min(W, H) * 0.04;
+  let best = null, bd = Infinity, hit = false;
+  for (const k of ['caption', 'text']) {
+    const st = items[k];
+    if (!st.text.trim()) continue;
+    const b = textBox(W, H, st);
+    const inside = Math.abs(px - b.cx) <= b.w / 2 + pad && Math.abs(py - b.cy) <= b.h / 2 + pad;
+    const d = inside ? 0 : Math.hypot(px - b.cx, py - b.cy);
+    if (d < bd) { bd = d; best = k; hit = inside; }
+  }
+  return best ? { key: best, hit } : null;
+}
+function canDragText(){ return !panelKind || isTextPanel(); }
+oc.addEventListener('pointerdown', e => {
+  if (!canDragText()) return;
+  if (ptrs.size === 0) {
+    if (isTextPanel()) { dragKey = panelKind; dragHit = true; }
+    else {
+      const pk = pickItem(evPt(e).x, evPt(e).y);
+      if (!pk) return;
+      dragKey = pk.key; dragHit = pk.hit;
+    }
+    dragStart = { x: e.clientX, y: e.clientY }; dragMoved = false; dragUndone = false;
+  } else if (!dragKey) return;
+  try { oc.setPointerCapture(e.pointerId); } catch(_) {}
+  ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  pinch = { size: items[dragKey].size, d0: pinchDist() };
+  selKey = dragKey; selUntil = performance.now() + 1500;
+});
+oc.addEventListener('pointermove', e => {
+  if (!dragKey || !ptrs.has(e.pointerId)) return;
+  const prev = ptrs.get(e.pointerId), st = items[dragKey];
+  ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  const moving = ptrs.size >= 2 || Math.hypot(e.clientX - dragStart.x, e.clientY - dragStart.y) >= 6;
+  if (!moving && !dragMoved) return;
+  if (!dragMoved) {
+    dragMoved = true;
+    if (!isTextPanel() && !dragUndone) { pushUndo(); dragUndone = true; }
+  }
+  if (ptrs.size === 1) {
+    st.x = clampN(st.x + (e.clientX - prev.x) / (oc.clientWidth || 1) * 100, 0, 100);
+    st.y = clampN(st.y + (e.clientY - prev.y) / (oc.clientHeight || 1) * 100, 0, 100);
+  } else if (ptrs.size === 2 && pinch.d0 > 0) {
+    st.size = clampN(pinch.size * pinchDist() / pinch.d0, 2, 30);
+  }
+  selKey = dragKey; selUntil = performance.now() + 1500;
+});
+['pointerup', 'pointercancel'].forEach(ev => oc.addEventListener(ev, e => {
+  if (!ptrs.has(e.pointerId)) return;
+  ptrs.delete(e.pointerId);
+  if (ptrs.size === 0) {
+    const k = dragKey; dragKey = null;
+    if (ev === 'pointerup' && k && !dragMoved && dragHit && !panelKind) openPanel(k);   // plain tap on the text
+    else if (isTextPanel() && panelTab === 4) renderPanel();
+  } else if (dragKey) {
+    pinch = { size: items[dragKey].size, d0: pinchDist() };
+    if (isTextPanel() && panelTab === 4) renderPanel();
+  }
+}));
+function onTextInput(){ items[panelKind].text = $('panel-text').value; animStart = performance.now(); }
+function setTab(i){ panelTab = i; renderPanel(); }
+function setItem(k, v, noRender){ items[panelKind][k] = v; animStart = performance.now(); if (!noRender) renderPanel(); }
+function setOvl(k, v){ ovl[k] = v; }
+function setAudioVol(v){ audio.vol = v; bgAudio.volume = v / 100; }
+
+function renderPanel(){
+  if (!panelKind) return;
+  const tabs = isTextPanel() ? ['Font','Color','Style','Motion','Size'] : panelKind === 'filters' ? ['Filters','Adjust'] : panelKind === 'format' ? ['Ratio','Frame rate','Resolution'] : panelKind === 'transition' ? ['Transition'] : panelKind === 'audio' ? ['Audio'] : ['Overlay'];
+  $('panel-tabs').innerHTML = tabs.map((t,i) =>
+    `<div class="chip px-4 flex-shrink-0 ${i===panelTab?'active':''}" onclick="setTab(${i})">${t}</div>`).join('');
+  const chip = (label, active, js, style) =>
+    `<div class="chip px-3 whitespace-nowrap ${active?'active':''}" style="${style||''}" onclick="${js}">${label}</div>`;
+  const slider = (name, min, max, val, js, step) =>
+    `<div class="w-full flex items-center space-x-2 text-[11px]"><span class="text-slate-400 w-24">${name}</span><input type="range" min="${min}" max="${max}" step="${step||1}" value="${val}" class="flex-1 accent-cyan-500" oninput="${js}"></div>`;
+  let h = '';
+  if (isTextPanel()) {
+    const st = items[panelKind];
+    if (panelTab === 0) h = FONTS.map((f,i) => chip('Aa ' + f.n, st.font===i, `setItem('font',${i})`, `font-family:${f.f};font-size:14px`)).join('');
+    else if (panelTab === 1) h = COLORS.map(c =>
+        `<div onclick="setItem('color','${c}')" class="w-8 h-8 rounded-full border-2 ${st.color===c?'border-cyan-400':'border-slate-600'}" style="background:${c}"></div>`).join('')
+        + `<input type="color" value="${st.color}" oninput="setItem('color',this.value,true)" class="w-8 h-8 rounded-full bg-transparent border-0 p-0">`;
+    else if (panelTab === 2) h = BGS.map(b => chip(b[1], st.bg===b[0], `setItem('bg','${b[0]}')`)).join('');
+    else if (panelTab === 3) h = ANIMS.map(a => chip(a[1], st.anim===a[0], `setItem('anim','${a[0]}')`)).join('');
+    else h = slider('Size', 2, 30, st.size, `setItem('size',+this.value,true)`, 0.5)
+        + `<div class="w-full flex space-x-2 mt-1">` + POS.map(p => chip(p[0], Math.abs(st.y-p[1])<1 && st.x===50, `setPos(${p[1]})`)).join('') + `</div>`;
+  } else if (panelKind === 'filters') {
+    if (panelTab === 0) h = PRESETS.map((p,i) => chip(p[0], filt.preset===i, `setFilt('preset',${i})`)).join('');
+    else h = [['b','Brightness',50,150],['c','Contrast',50,150],['s','Saturation',0,200],['blur','Blur',0,10]]
+        .map(([k,n,mn,mx]) => slider(n, mn, mx, filt[k], `setFilt('${k}',+this.value,true)`)).join('')
+        + `<div class="w-full">${chip('Reset', false, 'panelDelete()')}</div>`;
+  } else if (panelKind === 'transition') {
+    const tr = clips[trIdx].tr || { type: 'none', dur: 0.5 };
+    h = TRANS.map(t => chip(t[1], tr.type === t[0], `setTrans('${t[0]}')`)).join('')
+      + slider('Duration', 0.2, 2, tr.dur, 'setTransDur(+this.value)', 0.1)
+      + chip('<i class="fa-solid fa-play mr-1"></i> Preview', false, 'previewTransition()')
+      + chip('Apply to all', false, 'applyTransAll()');
+  } else if (panelKind === 'format') {
+    const {W, H} = outputSize();
+    h = `<div class="w-full text-[11px] text-slate-400">Output: <b class="text-slate-200">${W} × ${H}</b> · ${opt.fps} fps</div>`;
+    if (panelTab === 0) h += `<div class="w-full flex gap-2 overflow-x-auto no-scrollbar pb-1">${RATIOS.map((r,i) => ratioChip(i, `setOpt('ratio',${i})`)).join('')}</div>`;
+    else if (panelTab === 1) h += FPS.map(f => chip(f + ' fps', opt.fps===f, `setOpt('fps',${f})`)).join('');
+    else h += RESOLUTIONS.map(r => chip(r.label, opt.h===r.h, `setOpt('h',${r.h})`)).join('');
+  } else if (panelKind === 'audio') {
+    h = `<div class="w-full text-xs text-slate-300 truncate"><i class="fa-solid fa-music mr-2"></i>${esc(audio.name)} (${fmt(audio.dur)})</div>`
+      + slider('Volume', 0, 100, audio.vol, 'setAudioVol(+this.value)')
+      + chip('Replace audio', false, `$('audio-input').click()`) + chip('Remove', false, 'panelDelete()');
+  } else {
+    if (!ovl || !ovl.img) h = chip('<i class="fa-regular fa-image mr-1"></i> Choose image', false, `$('ovl-input').click()`);
+    else h = slider('Size', 5, 100, ovl.size, 'setOvl(\'size\',+this.value)') + slider('Left / right', 0, 100, ovl.x, 'setOvl(\'x\',+this.value)')
+      + slider('Up / down', 0, 100, ovl.y, 'setOvl(\'y\',+this.value)') + slider('Opacity', 10, 100, ovl.op, 'setOvl(\'op\',+this.value)')
+      + chip('Change image', false, `$('ovl-input').click()`);
+  }
+  $('panel-body').innerHTML = `<div class="flex flex-wrap gap-2 items-center">${h}</div>`;
+}
+
+// ----- thumbnail / cover -----
+const cover = { snap: null };
+const fmtT = v => (+v).toFixed(1) + 's';
+let coverClip = null, savedCover = null;
+function toast(msg){
+  const t = $('toast'); t.innerText = msg; t.classList.remove('hidden');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.add('hidden'), 2200);
+}
+function makeThumb(snapCv){
+  const cv = document.createElement('canvas'); cv.width = 96; cv.height = 96;
+  const sq = Math.min(snapCv.width, snapCv.height);
+  cv.getContext('2d').drawImage(snapCv, (snapCv.width - sq)/2, (snapCv.height - sq)/2, sq, sq, 0, 0, 96, 96);
+  return cv.toDataURL('image/jpeg', 0.7);
+}
+function openCover(){
+  pause();
+  $('cover-modal').classList.remove('hidden');
+  const {i, off} = locate(T);
+  const c = coverClip = clips[i];
+  const v = $('cover-video'), range = $('cover-range'), wrap = $('cover-slider-wrap');
+  $('cover-reset').classList.toggle('hidden', !savedCover);
+  if (savedCover) { $('cover-text').checked = savedCover.text; $('cover-first').checked = savedCover.first; }
+  v.onseeked = () => setSnap(v, v.videoWidth, v.videoHeight);
+  if (isImg(c)) {
+    wrap.classList.add('hidden');
+    if (savedCover) { cover.snap = savedCover.snap; drawCoverPreview(); return; }
+    const im = new Image();
+    im.onload = () => setSnap(im, im.naturalWidth, im.naturalHeight);
+    im.src = c.url;
+  } else {
+    wrap.classList.remove('hidden');
+    range.min = c.start; range.max = c.end; range.step = 0.05; range.value = c.start + off;
+    $('cover-time').innerText = '(' + fmtT(off) + ')';
+    if (savedCover) {                       // show the current cover; moving the slider picks a new frame
+      cover.snap = savedCover.snap; drawCoverPreview();
+      if (v.dataset.u !== c.url) { v.dataset.u = c.url; v.onloadedmetadata = null; v.src = c.url; }
+      return;
+    }
+    const go = () => { v.currentTime = c.start + off + 0.001; };
+    if (v.dataset.u === c.url && v.readyState > 0) go();
+    else { v.dataset.u = c.url; v.onloadedmetadata = go; v.src = c.url; }
+  }
+}
+function saveCover(){
+  if (!cover.snap) { alert('Cover is not ready yet'); return; }
+  savedCover = {
+    snap: cover.snap, thumb: makeThumb(cover.snap),
+    text: $('cover-text').checked, first: $('cover-first').checked
+  };
+  closeCover(); renderTimeline();
+  toast('Cover saved');
+}
+function resetCover(){
+  savedCover = null; closeCover(); renderTimeline(); genThumbs();
+  toast('Cover removed');
+}
+function seekCover(val){
+  $('cover-video').currentTime = +val;
+  $('cover-time').innerText = '(' + fmtT(+val - coverClip.start) + ')';
+}
+function setSnap(src, w, h){
+  if (!w || !h) return;
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  cv.getContext('2d').drawImage(src, 0, 0, w, h);
+  cover.snap = cv;
+  drawCoverPreview();
+}
+function renderCover(W, H, withText, src){
+  src = src || cover.snap;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const x = cv.getContext('2d');
+  x.fillStyle = '#000'; x.fillRect(0, 0, W, H);
+  x.filter = currentFilter;
+  drawContain(x, src, src.width, src.height, W, H);
+  x.filter = 'none';
+  if (withText) drawOverlays(x, W, H, 99);
+  return cv;
+}
+function drawCoverPreview(){
+  if (!cover.snap) return;
+  const {W, H} = outputSize();
+  const pw = 360, ph = Math.round(pw * H / W);
+  const pc = document.getElementById('cover-canvas');
+  pc.width = pw; pc.height = ph;
+  pc.getContext('2d').drawImage(renderCover(pw, ph, document.getElementById('cover-text').checked), 0, 0);
+  document.getElementById('cover-info').innerText = `Thumbnail size: ${W} × ${H} (same as export resolution and ratio)`;
+}
+function uploadCover(e){
+  const f = e.target.files[0];
+  if (!f) return;
+  const im = new Image();
+  im.onload = () => { setSnap(im, im.naturalWidth, im.naturalHeight); URL.revokeObjectURL(im.src); };
+  im.src = URL.createObjectURL(f);
+  e.target.value = '';
+}
+function downloadCover(){
+  if (!cover.snap) { alert('Thumbnail is not ready yet'); return; }
+  const {W, H} = outputSize();
+  let cv;
+  try { cv = renderCover(W, H, $('cover-text').checked); }
+  catch (err) { alert('Could not create image at this size. Try a lower resolution.'); return; }
+  cv.toBlob(async b => {
+    if (!b) { alert('Could not create image at this size. Try a lower resolution.'); return; }
+    const r = await saveBlob(b, `thumbnail_${W}x${H}.jpg`);
+    if (r === 'saved') toast('Thumbnail saved to gallery (Pictures/CapCutEditor)');
+    else if (r === 'unsupported') showSaveOverlay(URL.createObjectURL(b), 'image');
+  }, 'image/jpeg', 0.92);
+}
+function closeCover(){
+  document.getElementById('cover-modal').classList.add('hidden');
+  document.getElementById('cover-video').pause();
+}
+
+function backToHome(){
+  pause();
+  $('gallery-screen').classList.add('hidden');
+  $('editor-screen').classList.add('hidden');
+  $('home-screen').classList.remove('hidden');
+}
+</script>
+</body>
+</html>
